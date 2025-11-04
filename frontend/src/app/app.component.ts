@@ -1,12 +1,11 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { TaskComponent } from './components/task/task.component';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  standalone: true,
+  imports: [TaskComponent, HttpClientModule],
+  template: `<app-task></app-task>`,
 })
-export class AppComponent {
-  title = 'frontend';
-}
+export class AppComponent {}

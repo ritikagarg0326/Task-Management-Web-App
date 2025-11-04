@@ -1,88 +1,76 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from models import Base, Task
-from datetime import datetime
+import sqlite3
 
-# Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # ✅ Allow requests from Angular frontend
 
-# Database setup
-DATABASE_URL = "sqlite:///database.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-Base.metadata.create_all(bind=engine)
-Session = sessionmaker(bind=engine)
+DB_NAME = "database.db"
 
-# 🟢 Create a new task
-@app.route("/tasks", methods=["POST"])
-def create_task():
-    session = Session()
-    data = request.json
-    new_task = Task(
-        title=data.get("title"),
-        description=data.get("description"),
-        status="todo"
-    )
-    session.add(new_task)
-    session.commit()
-    session.refresh(new_task)
-    session.close()
-    return jsonify({"message": "Task created", "task": {"id": new_task.id, "title": new_task.title}}), 201
+# --- Helper functions ---
+def get_db_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-# 🔵 Get all tasks
+
+# --- Routes ---
+
 @app.route("/tasks", methods=["GET"])
 def get_tasks():
-    session = Session()
-    tasks = session.query(Task).all()
-    session.close()
-    return jsonify([
-        {
-            "id": t.id,
-            "title": t.title,
-            "description": t.description,
-            "status": t.status,
-            "created_at": t.created_at,
-            "updated_at": t.updated_at
-        } for t in tasks
-    ])
+    conn = get_db_connection()
+    tasks = conn.execute("SELECT * FROM tasks").fetchall()
+    conn.close()
+    return jsonify([dict(task) for task in tasks])
 
-# 🟡 Update a task
-@app.route("/tasks/<int:task_id>", methods=["PUT"])
-def update_task(task_id):
-    session = Session()
-    data = request.json
-    task = session.query(Task).filter(Task.id == task_id).first()
 
-    if not task:
-        session.close()
-        return jsonify({"error": "Task not found"}), 404
+@app.route("/tasks", methods=["POST"])
+def add_task():
+    data = request.get_json()
+    title = data.get("title", "")
+    completed = data.get("completed", False)
+    conn = get_db_connection()
+    conn.execute(
+        "INSERT INTO tasks (title, completed) VALUES (?, ?)", (title, int(completed))
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Task added successfully!"}), 201
 
-    task.title = data.get("title", task.title)
-    task.description = data.get("description", task.description)
-    task.status = data.get("status", task.status)
-    task.updated_at = datetime.utcnow()
 
-    session.commit()
-    session.close()
-    return jsonify({"message": "Task updated successfully"}), 200
+@app.route("/tasks/<int:id>", methods=["PUT"])
+def update_task(id):
+    data = request.get_json()
+    completed = data.get("completed", False)
+    conn = get_db_connection()
+    conn.execute("UPDATE tasks SET completed = ? WHERE id = ?", (int(completed), id))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Task updated successfully!"})
 
-# 🔴 Delete a task
-@app.route("/tasks/<int:task_id>", methods=["DELETE"])
-def delete_task(task_id):
-    session = Session()
-    task = session.query(Task).filter(Task.id == task_id).first()
 
-    if not task:
-        session.close()
-        return jsonify({"error": "Task not found"}), 404
+@app.route("/tasks/<int:id>", methods=["DELETE"])
+def delete_task(id):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM tasks WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Task deleted successfully!"})
 
-    session.delete(task)
-    session.commit()
-    session.close()
-    return jsonify({"message": "Task deleted successfully"}), 200
 
-# Run app
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    conn = get_db_connection()
+    # ✅ Ensure tasks table exists
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            completed BOOLEAN NOT NULL DEFAULT 0
+        )
+        """
+    )
+    conn.commit()
+    conn.close()
+
+    app.run(debug=True)

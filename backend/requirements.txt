@@ -1,3 +1,3 @@
-Flask==2.2.5
-Flask-Cors==3.0.10
-SQLAlchemy==1.4.52
+Flask
+Flask-Cors
+Flask-SQLAlchemy
