@@ -2,21 +2,23 @@ version: "3.8"
 
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: ./backend
+    container_name: flask-backend
     ports:
-      - "5001:5001"
-    volumes:
-      - ./backend:/app
-    restart: always
+      - "5000:5000"
+    networks:
+      - tasknet
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
+    build: ./frontend
+    container_name: angular-frontend
     ports:
-      - "4200:80"
+      - "4200:4200"
     depends_on:
       - backend
-    restart: always
+    networks:
+      - tasknet
+
+networks:
+  tasknet:
+    driver: bridge

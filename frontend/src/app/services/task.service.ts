@@ -12,7 +12,9 @@ export interface Task {
   providedIn: 'root',
 })
 export class TaskService {
-  private apiUrl = 'http://localhost:5001/tasks';
+  //private apiUrl = 'http://localhost:5000/tasks';
+//private apiUrl = 'http://backend:5000/tasks';
+private apiUrl = 'http://flask-backend:5000/tasks';
 
   constructor(private http: HttpClient) {}
 
