@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Task {
   id?: number;
@@ -12,9 +13,10 @@ export interface Task {
   providedIn: 'root',
 })
 export class TaskService {
-  //private apiUrl = 'http://localhost:5000/tasks';
+  private apiUrl = environment.apiUrl;; 
+ // private apiUrl = 'http://localhost:5000/tasks'; //choose this when working locally
 //private apiUrl = 'http://backend:5000/tasks';
-private apiUrl = 'http://flask-backend:5000/tasks';
+//private apiUrl = 'http://flask-backend:5000/tasks';
 
   constructor(private http: HttpClient) {}
 
