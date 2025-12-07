@@ -1,3 +1,4 @@
+[![Docker Compose CI](https://github.com/ritikagarg0326/Task-Management-Web-App/actions/workflows/docker-build.yml/badge.svg)](https://github.com/ritikagarg0326/Task-Management-Web-App/actions/workflows/docker-build.yml)
 Task Management Web App (Python + Angular + SQLite)
 📘 Project Overview
 
